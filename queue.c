@@ -11,8 +11,7 @@ struct list_head *q_new()
     if (head == NULL) {
         return NULL;
     }
-    head->next = head;
-    head->prev = head;
+    INIT_LIST_HEAD(head);
     return head;
 }
 
@@ -46,7 +45,18 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 /* Return number of elements in queue */
 int q_size(struct list_head *head)
 {
-    return -1;
+    if (head == NULL || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *curr;
+    int size = 0;
+
+    list_for_each(curr, head) {
+        size++;
+    }
+
+    return size;
 }
 
 /* Delete the middle node in queue */
