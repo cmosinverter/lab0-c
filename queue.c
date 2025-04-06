@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "list_sort.h"
 #include "queue.h"
 
 /* Create an empty queue */
@@ -235,15 +236,52 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
+/* Compare two elements based on their string values. */
+int cmp(const struct list_head *a, const struct list_head *b)
+{
+    const element_t *ela = list_entry(a, element_t, list);
+    const element_t *elb = list_entry(b, element_t, list);
+
+    return strcmp(ela->value, elb->value);
+}
+
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+void q_sort(struct list_head *head, bool descend)
+{
+    list_sort(head, cmp);
+    // list_merge_sort_iterative(head,cmp,q_size);
+    if (descend)
+        q_reverse(head);
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+
+    if (head == NULL || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *curr = head->next;
+    struct list_head *safe;
+    struct list_head *iter;
+
+    while (curr != head) {
+        safe = iter = curr->next;
+        while (iter != head) {
+            if (strcmp(list_entry(curr, element_t, list)->value,
+                       list_entry(iter, element_t, list)->value) > 0) {
+                list_del(curr);
+                q_release_element(list_entry(curr, element_t, list));
+                break;
+            }
+            iter = iter->next;
+        }
+        curr = safe;
+    }
+    return q_size(head);
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
@@ -251,7 +289,29 @@ int q_ascend(struct list_head *head)
 int q_descend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+
+    if (head == NULL || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *curr = head->next;
+    struct list_head *safe;
+    struct list_head *iter;
+
+    while (curr != head) {
+        safe = iter = curr->next;
+        while (iter != head) {
+            if (strcmp(list_entry(curr, element_t, list)->value,
+                       list_entry(iter, element_t, list)->value) < 0) {
+                list_del(curr);
+                q_release_element(list_entry(curr, element_t, list));
+                break;
+            }
+            iter = iter->next;
+        }
+        curr = safe;
+    }
+    return q_size(head);
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
@@ -259,5 +319,24 @@ int q_descend(struct list_head *head)
 int q_merge(struct list_head *head, bool descend)
 {
     // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+
+    if (head == NULL) {
+        return 0;
+    }
+    if (head->next == head) {
+        return q_size(list_entry(head, queue_contex_t, chain)->q);
+    }
+
+    struct list_head *curr = head->next;
+    struct list_head *h1 = list_entry(curr, queue_contex_t, chain)->q;
+
+    while (curr->next != head) {
+        struct list_head *h2 = list_entry(curr->next, queue_contex_t, chain)->q;
+        list_splice_tail_init(h2, h1);
+        curr = curr->next;
+    }
+
+    q_sort(h1, descend);
+
+    return q_size(h1);
 }
