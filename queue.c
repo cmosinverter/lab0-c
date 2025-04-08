@@ -243,12 +243,77 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
+/* Merge two sorted queues into one sorted queue, which is in ascending order */
+void q_merge_two(struct list_head *h1, struct list_head *h2)
+{
+    // https://leetcode.com/problems/merge-two-sorted-lists/
+
+    if (h1 == NULL || h2 == NULL) {
+        return;
+    }
+
+    LIST_HEAD(result);
+    struct list_head *curr1 = h1->next;
+    struct list_head *curr2 = h2->next;
+    struct list_head *safe1, *safe2;
+
+    while (curr1 != h1 && curr2 != h2) {
+        if (cmp(curr1, curr2) < 0) {
+            safe1 = curr1->next;
+            list_move_tail(curr1, &result);
+            curr1 = safe1;
+        } else {
+            safe2 = curr2->next;
+            list_move_tail(curr2, &result);
+            curr2 = safe2;
+        }
+    }
+
+    while (curr1 != h1) {
+        safe1 = curr1->next;
+        list_move_tail(curr1, &result);
+        curr1 = safe1;
+    }
+
+    while (curr2 != h2) {
+        safe2 = curr2->next;
+        list_move_tail(curr2, &result);
+        curr2 = safe2;
+    }
+
+    list_splice(&result, h1);
+    INIT_LIST_HEAD(h2);
+}
+
 /* Sort elements of queue in ascending/descending order */
 void q_sort(struct list_head *head, bool descend)
 {
-    list_sort(head, cmp);
-    if (descend)
+    // list_sort(head, cmp);
+    // if (descend)
+    //     q_reverse(head);
+
+    if (head == NULL || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+
+    struct list_head *slow = head->next;
+    struct list_head *fast = head->next->next;
+
+    while (fast != head && fast->next != head) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    LIST_HEAD(left);
+    list_cut_position(&left, head, slow);
+
+    q_sort(&left, 0);
+    q_sort(head, 0);
+    q_merge_two(head, &left);
+
+    if (descend) {
         q_reverse(head);
+    }
 }
 
 /* Remove every node which has a node with a strictly less value anywhere to
@@ -307,47 +372,6 @@ int q_descend(struct list_head *head)
         curr = safe;
     }
     return q_size(head);
-}
-
-/* Merge two sorted queues into one sorted queue, which is in ascending order */
-void q_merge_two(struct list_head *h1, struct list_head *h2)
-{
-    // https://leetcode.com/problems/merge-two-sorted-lists/
-
-    if (h1 == NULL || h2 == NULL) {
-        return;
-    }
-
-    struct list_head *curr1 = h1->next;
-    struct list_head *curr2 = h2->next;
-    struct list_head *safe1, *safe2;
-
-    while (curr1 != h1 && curr2 != h2) {
-        if (cmp(curr1, curr2) < 0) {
-            safe1 = curr1->next;
-            list_move(curr1, h1);
-            curr1 = safe1;
-        } else {
-            safe2 = curr2->next;
-            list_move(curr2, h1);
-            curr2 = safe2;
-        }
-    }
-
-    while (curr1 != h1) {
-        safe1 = curr1->next;
-        list_move(curr1, h1);
-        curr1 = safe1;
-    }
-
-    while (curr2 != h2) {
-        safe2 = curr2->next;
-        list_move(curr2, h1);
-        curr2 = safe2;
-    }
-
-    INIT_LIST_HEAD(h2);
-    q_reverse(h1);
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
