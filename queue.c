@@ -5,6 +5,15 @@
 #include "list_sort.h"
 #include "queue.h"
 
+/* Compare two elements based on their string values. */
+static inline int cmp(const struct list_head *a, const struct list_head *b)
+{
+    const element_t *ela = list_entry(a, element_t, list);
+    const element_t *elb = list_entry(b, element_t, list);
+
+    return strcmp(ela->value, elb->value);
+}
+
 /* Create an empty queue */
 struct list_head *q_new()
 {
@@ -234,15 +243,6 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
-/* Compare two elements based on their string values. */
-int cmp(const struct list_head *a, const struct list_head *b)
-{
-    const element_t *ela = list_entry(a, element_t, list);
-    const element_t *elb = list_entry(b, element_t, list);
-
-    return strcmp(ela->value, elb->value);
-}
-
 /* Sort elements of queue in ascending/descending order */
 void q_sort(struct list_head *head, bool descend)
 {
@@ -268,8 +268,7 @@ int q_ascend(struct list_head *head)
     while (curr != head) {
         safe = iter = curr->next;
         while (iter != head) {
-            if (strcmp(list_entry(curr, element_t, list)->value,
-                       list_entry(iter, element_t, list)->value) > 0) {
+            if (cmp(curr, iter) > 0) {
                 list_del(curr);
                 q_release_element(list_entry(curr, element_t, list));
                 break;
@@ -298,8 +297,7 @@ int q_descend(struct list_head *head)
     while (curr != head) {
         safe = iter = curr->next;
         while (iter != head) {
-            if (strcmp(list_entry(curr, element_t, list)->value,
-                       list_entry(iter, element_t, list)->value) < 0) {
+            if (cmp(curr, iter) < 0) {
                 list_del(curr);
                 q_release_element(list_entry(curr, element_t, list));
                 break;
@@ -325,31 +323,26 @@ void q_merge_two(struct list_head *h1, struct list_head *h2)
     struct list_head *safe1, *safe2;
 
     while (curr1 != h1 && curr2 != h2) {
-        if (strcmp(list_entry(curr1, element_t, list)->value,
-                   list_entry(curr2, element_t, list)->value) < 0) {
+        if (cmp(curr1, curr2) < 0) {
             safe1 = curr1->next;
-            list_del(curr1);
-            list_add(curr1, h1);
+            list_move(curr1, h1);
             curr1 = safe1;
         } else {
             safe2 = curr2->next;
-            list_del(curr2);
-            list_add(curr2, h1);
+            list_move(curr2, h1);
             curr2 = safe2;
         }
     }
 
     while (curr1 != h1) {
         safe1 = curr1->next;
-        list_del(curr1);
-        list_add(curr1, h1);
+        list_move(curr1, h1);
         curr1 = safe1;
     }
 
     while (curr2 != h2) {
         safe2 = curr2->next;
-        list_del(curr2);
-        list_add(curr2, h1);
+        list_move(curr2, h1);
         curr2 = safe2;
     }
 
