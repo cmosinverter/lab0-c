@@ -288,10 +288,6 @@ void q_merge_two(struct list_head *h1, struct list_head *h2)
 /* Sort elements of queue in ascending/descending order */
 void q_sort(struct list_head *head, bool descend)
 {
-    // list_sort(head, cmp);
-    // if (descend)
-    //     q_reverse(head);
-
     if (head == NULL || list_empty(head) || list_is_singular(head)) {
         return;
     }
@@ -411,4 +407,35 @@ int q_merge(struct list_head *head, bool descend)
     }
 
     return q_size(list_entry(head->next, queue_contex_t, chain)->q);
+}
+
+
+void q_shuffle(struct list_head *head)
+{
+    // https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
+
+    if (head == NULL || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+
+    size_t size = q_size(head);
+
+    struct list_head *tail = head->prev;
+
+    while (tail != head) {
+        size_t random = rand() % size;
+        struct list_head *chosen = head->next;
+        while (random > 0) {
+            chosen = chosen->next;
+            random--;
+        }
+
+        char *temp = list_entry(tail, element_t, list)->value;
+        list_entry(tail, element_t, list)->value =
+            list_entry(chosen, element_t, list)->value;
+        list_entry(chosen, element_t, list)->value = temp;
+
+        tail = tail->prev;
+        size--;
+    }
 }
